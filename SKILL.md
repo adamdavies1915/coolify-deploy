@@ -21,7 +21,10 @@ export BASE_DOMAIN="example.com"                    # Base domain for subdomains
 
 1. **Coolify API Token**: Get from `<your-coolify-url>/security/api-tokens`
 2. **GitHub App**: Must be configured in Coolify
-3. **Environment variable**: Set `COOLIFY_TOKEN` with your API token
+3. **Environment variables** (all three required):
+   - `COOLIFY_TOKEN` — your API token
+   - `COOLIFY_URL` — your Coolify instance URL (e.g., `https://coolify.example.com`)
+   - `BASE_DOMAIN` — the base domain for subdomains (e.g., `example.com`)
 
 ### Token Format (Important)
 
