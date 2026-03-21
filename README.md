@@ -31,7 +31,9 @@ Set your Coolify API token as an environment variable:
 export COOLIFY_TOKEN='2|G0gaUiI5lG3ryJc3nCoWFrj...'
 ```
 
-Get a token from your Coolify instance at **Settings > API Tokens**.
+Get a token from your Coolify instance under **Security > API Tokens**:
+
+![Coolify API Tokens](images/coolify-api-tokens.png)
 
 ### Customizing for your instance
 
