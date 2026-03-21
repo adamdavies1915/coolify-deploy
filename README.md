@@ -35,14 +35,11 @@ Get a token from your Coolify instance at **Settings > API Tokens**.
 
 ### Customizing for your instance
 
-Edit `SKILL.md` and update the default configuration section with your Coolify URL, destination UUID, and base domain.
+You can also set `COOLIFY_URL` as an environment variable instead of editing `SKILL.md`:
 
-You can also set these environment variables:
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `COOLIFY_URL` | `https://coolify.example.com` | Your Coolify instance URL |
-| `BASE_DOMAIN` | `example.com` | Base domain for subdomains |
+```bash
+export COOLIFY_URL="https://coolify.example.com"
+```
 
 ## Usage
 

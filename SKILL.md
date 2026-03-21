@@ -14,17 +14,15 @@ Set these environment variables for your Coolify instance:
 ```bash
 export COOLIFY_URL="https://coolify.example.com"   # Your Coolify instance URL
 export COOLIFY_TOKEN='2|your-token-here'            # Your Coolify API token
-export BASE_DOMAIN="example.com"                    # Base domain for subdomains
 ```
 
 ## Prerequisites
 
 1. **Coolify API Token**: Get from `<your-coolify-url>/security/api-tokens`
 2. **GitHub App**: Must be configured in Coolify
-3. **Environment variables** (all three required):
+3. **Environment variables** (required):
    - `COOLIFY_TOKEN` — your API token
    - `COOLIFY_URL` — your Coolify instance URL (e.g., `https://coolify.example.com`)
-   - `BASE_DOMAIN` — the base domain for subdomains (e.g., `example.com`)
 
 ### Token Format (Important)
 
@@ -45,7 +43,7 @@ When passing directly in curl, always quote the token to prevent the shell from 
 Ask the user for:
 - GitHub repository (format: `owner/repo`)
 - Branch to deploy (default: `main`)
-- Subdomain for the app (e.g., `myapp` for `myapp.example.com`)
+- Full domain for the app (e.g., `https://myapp.example.com`)
 - Port the app listens on (default: `3000`)
 - Build pack: `dockerfile`, `nixpacks`, or `static`
 
@@ -115,16 +113,16 @@ APP_UUID=$(echo $APP_RESPONSE | jq -r '.uuid')
 echo "Created application: $APP_UUID"
 ```
 
-### Step 5: Configure Subdomain
+### Step 5: Configure Domain
 
 ```bash
-SUBDOMAIN="myapp"
-DOMAIN="${BASE_DOMAIN:-example.com}"
+# Use the full domain provided by the user
+APP_DOMAIN="https://myapp.example.com"
 
 curl -s -X PATCH "$COOLIFY_URL/api/v1/applications/$APP_UUID" \
   -H "Authorization: Bearer $COOLIFY_TOKEN" \
   -H "Content-Type: application/json" \
-  -d "{\"domains\": \"https://${SUBDOMAIN}.${DOMAIN}\"}"
+  -d "{\"domains\": \"$APP_DOMAIN\"}"
 ```
 
 ### Step 6: Add Environment Variables
