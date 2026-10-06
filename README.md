@@ -31,9 +31,11 @@ Set your Coolify API token as an environment variable:
 export COOLIFY_TOKEN='2|G0gaUiI5lG3ryJc3nCoWFrj...'
 ```
 
-Get a token from your Coolify instance under **Security > API Tokens**:
+Get a token from your Coolify instance under **Keys & Tokens > API Tokens**:
 
 ![Coolify API Tokens](images/coolify-api-tokens.png)
+
+The bundled script discovers resources, writes configuration, and starts deployments with one token. With dashboard-created tokens, this requires a team-scoped `root` token; a `deploy`-only token cannot perform setup. For deployment-only automation, prefer `deploy`. See [Coolify API permissions](https://coolify.io/docs/api/permissions).
 
 ### Customizing for your instance
 
@@ -63,7 +65,17 @@ Once installed, Claude Code will automatically use this skill when you ask it to
   --port 3000
 ```
 
-Run with `--help` for all options.
+Run with `--help` for all options. The script reports when the deployment request is accepted; confirm completion and application health in Coolify before treating the deployment as successful.
+
+## Tests
+
+Run the offline regression checks with Bash and jq installed:
+
+```bash
+bash tests/test-deploy.sh
+```
+
+The tests replace curl with a local stub and never contact a Coolify instance.
 
 ## Prerequisites
 

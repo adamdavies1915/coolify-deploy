@@ -18,7 +18,7 @@ export COOLIFY_TOKEN='2|your-token-here'            # Your Coolify API token
 
 ## Prerequisites
 
-1. **Coolify API Token**: Get from `<your-coolify-url>/security/api-tokens`
+1. **Coolify API Token**: Create one under **Keys & Tokens > API Tokens** in your instance
 2. **GitHub App**: Must be configured in Coolify
 3. **Environment variables** (required):
    - `COOLIFY_TOKEN` — your API token
@@ -35,6 +35,14 @@ export COOLIFY_TOKEN='2|G0gaUiI5lG3ryJc3nCoWFrj...'
 ```
 
 When passing directly in curl, always quote the token to prevent the shell from treating `|` as a pipe operator.
+
+### Token Permissions
+
+The full workflow reads resources, creates and updates configuration, and starts deployments. The current scopes are `read`, `read:sensitive`, `write`, `deploy`, and `root`. A dashboard-created `deploy` token is deploy-only; it cannot run the discovery or setup steps.
+
+The bundled script uses one token for every step; with dashboard-created tokens, this workflow needs `root`. Keep it scoped to the intended team and store it securely. Use `deploy` for deployment-only integrations and `read:sensitive` for integrations that need sensitive responses such as logs. Privileged tokens require a team administrator or owner.
+
+See [Coolify API permissions](https://coolify.io/docs/api/permissions). A successful read request does not prove that the token can write or deploy.
 
 ## Quick Deploy Workflow
 
@@ -143,9 +151,12 @@ curl -s -X POST "$COOLIFY_URL/api/v1/applications/$APP_UUID/envs" \
 
 ```bash
 # Trigger deployment
-curl -s -X GET "$COOLIFY_URL/api/v1/applications/$APP_UUID/start" \
-  -H "Authorization: Bearer $COOLIFY_TOKEN"
+curl --fail --silent --show-error -X POST "$COOLIFY_URL/api/v1/applications/$APP_UUID/start" \
+  -H "Authorization: Bearer $COOLIFY_TOKEN" \
+  -H "Accept: application/json"
 ```
+
+This only submits the deployment request. Open Deployments in Coolify, wait for completion, and verify the application health and public URL before reporting success. Current API endpoints use POST for start/deploy operations; older GET examples can return 405. See the [application start API](https://coolify.io/docs/api/endpoints/applications/start-application-by-uuid).
 
 ## Complete Script Usage
 
@@ -178,7 +189,7 @@ export COOLIFY_TOKEN="your-token"
 | `/api/v1/applications/private-github-app` | POST | **Create app via GitHub App** |
 | `/api/v1/applications/{uuid}` | PATCH | Update app (domains, settings) |
 | `/api/v1/applications/{uuid}/envs` | POST | Add environment variable |
-| `/api/v1/applications/{uuid}/start` | GET | Deploy/start application |
+| `/api/v1/applications/{uuid}/start` | POST | Request deployment/start |
 
 ## Static Site Deployment (Astro, Vite, etc.)
 
@@ -205,7 +216,9 @@ Do NOT use the `static` build pack -- it has reliability issues with Traefik rou
 
 ## Troubleshooting
 
-- **401 Unauthorized**: Get a new token from `<your-coolify-url>/security/api-tokens`. Make sure the full `id|hash` token is being used (see Token Format above).
+- **401 Unauthorized**: Check the token under **Keys & Tokens > API Tokens**. Make sure the full `id|hash` token is being used (see Token Format above).
+- **403 Forbidden**: Check the token permissions, active team at creation, and owner role. A deploy-only token cannot list or create resources.
+- **405 Method Not Allowed**: Use POST for `/api/v1/applications/{uuid}/start` and `/api/v1/deploy`.
 - **502 Bad Gateway**: Check that `domains` is set (not null), `ports_exposes` matches the port your app actually listens on, and the container is healthy. For static sites, use nginx on port 80 via Dockerfile.
 - **422 Validation Error**: Check required fields (project_uuid, server_uuid, github_app_uuid). Some fields like `dockerfile_location` are not accepted by the PATCH endpoint.
 - **GitHub App not found**: Verify GitHub App is configured in Coolify

@@ -139,13 +139,15 @@ api_call() {
     fi
 
     if [[ -n "$data" ]]; then
-        curl -s -X "$method" "${COOLIFY_URL}${endpoint}" \
+        curl --fail --silent --show-error -X "$method" "${COOLIFY_URL}${endpoint}" \
             -H "Authorization: Bearer $COOLIFY_TOKEN" \
+            -H "Accept: application/json" \
             -H "Content-Type: application/json" \
             -d "$data"
     else
-        curl -s -X "$method" "${COOLIFY_URL}${endpoint}" \
-            -H "Authorization: Bearer $COOLIFY_TOKEN"
+        curl --fail --silent --show-error -X "$method" "${COOLIFY_URL}${endpoint}" \
+            -H "Authorization: Bearer $COOLIFY_TOKEN" \
+            -H "Accept: application/json"
     fi
 }
 
@@ -211,21 +213,21 @@ print_step "Setting up project: $PROJECT_NAME..."
 if [[ "$DRY_RUN" == "true" ]]; then
     PROJECT_UUID="dry-run-project-uuid"
 else
-    PROJECT_RESPONSE=$(api_call POST "/api/v1/projects" "{\"name\": \"$PROJECT_NAME\"}")
-    PROJECT_UUID=$(echo "$PROJECT_RESPONSE" | jq -r '.uuid // empty')
+    PROJECTS=$(api_call GET "/api/v1/projects")
+    PROJECT_UUID=$(echo "$PROJECTS" | jq -r --arg name "$PROJECT_NAME" '[.[] | select(.name == $name)] | .[0].uuid // empty')
 
-    if [[ -z "$PROJECT_UUID" ]]; then
-        print_warning "Project may exist, searching..."
-        PROJECTS=$(api_call GET "/api/v1/projects")
-        PROJECT_UUID=$(echo "$PROJECTS" | jq -r ".[] | select(.name == \"$PROJECT_NAME\") | .uuid")
+    if [[ -n "$PROJECT_UUID" ]]; then
+        print_success "Found existing project: $PROJECT_UUID"
+    else
+        PROJECT_PAYLOAD=$(jq -n --arg name "$PROJECT_NAME" '{name: $name}')
+        PROJECT_RESPONSE=$(api_call POST "/api/v1/projects" "$PROJECT_PAYLOAD")
+        PROJECT_UUID=$(echo "$PROJECT_RESPONSE" | jq -r '.uuid // empty')
 
         if [[ -z "$PROJECT_UUID" ]]; then
-            print_error "Failed to create or find project"
+            print_error "Failed to create project"
             echo "$PROJECT_RESPONSE"
             exit 1
         fi
-        print_success "Found existing project: $PROJECT_UUID"
-    else
         print_success "Created project: $PROJECT_UUID"
     fi
 fi
@@ -291,12 +293,21 @@ fi
 
 # Step 8: Deploy
 print_step "Starting deployment..."
-api_call GET "/api/v1/applications/$APP_UUID/start" > /dev/null
-print_success "Deployment triggered"
+api_call POST "/api/v1/applications/$APP_UUID/start" > /dev/null
+if [[ "$DRY_RUN" == "true" ]]; then
+    print_success "Deployment request simulated"
+else
+    print_success "Deployment request accepted"
+fi
 
 echo ""
 echo "=========================================="
-echo -e "${GREEN}  Deployment Complete!${NC}"
+if [[ "$DRY_RUN" == "true" ]]; then
+    echo -e "${GREEN}  Dry Run Complete! No deployment started.${NC}"
+else
+    echo -e "${GREEN}  Deployment Requested${NC}"
+    echo "  Verify deployment progress and application health in Coolify."
+fi
 echo "=========================================="
 echo "  Application UUID: $APP_UUID"
 echo "  URL: $FULL_DOMAIN"
